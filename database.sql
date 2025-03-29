@@ -82,6 +82,7 @@ CREATE TABLE TransactionDetails (
 ) ENGINE=InnoDB;
 
 DELIMITER $$
+
 CREATE TRIGGER trg_after_transaction_details_insert
 AFTER INSERT ON TransactionDetails
 FOR EACH ROW
@@ -96,9 +97,7 @@ BEGIN
     WHERE OutletID = v_OutletID
       AND ProductID = NEW.ProductID;
 END$$
-DELIMITER ;
 
-DELIMITER $$
 CREATE TRIGGER trg_after_delivery_details_insert
 AFTER INSERT ON DeliveryDetails
 FOR EACH ROW
@@ -118,4 +117,5 @@ BEGIN
     SET Quantity = Quantity - NEW.Quantity
     WHERE WarehouseID = v_WarehouseID AND ProductID = NEW.ProductID;
 END$$
+
 DELIMITER ;
