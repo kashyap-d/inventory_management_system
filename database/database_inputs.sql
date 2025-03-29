@@ -1,3 +1,4 @@
+--JUST A SAMPLE CAN USE ANY APPROPRATE INSERT VALUES
 INSERT INTO Warehouse (WarehouseName, Location) VALUES
 ('Central Warehouse', '123 Warehouse St, City Center');
 
