@@ -1,3 +1,4 @@
+--note a fewchanges have been made to some of the on delete cascade: they've been set to on delete restraint instead
 CREATE TABLE Warehouse (
     WarehouseID INT AUTO_INCREMENT PRIMARY KEY,
     WarehouseName VARCHAR(50) NOT NULL,
