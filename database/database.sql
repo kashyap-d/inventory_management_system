@@ -1,4 +1,3 @@
---note a fewchanges have been made to some of the on delete cascade: they've been set to on delete restraint instead
 CREATE TABLE Warehouse (
     WarehouseID INT AUTO_INCREMENT PRIMARY KEY,
     WarehouseName VARCHAR(50) NOT NULL,
@@ -120,3 +119,30 @@ BEGIN
 END$$
 
 DELIMITER ;
+
+--fixes for some problematic foreign keys (delete on cascade causing issues in some cases)
+ALTER TABLE WarehouseInventory DROP FOREIGN KEY WarehouseInventory_ibfk_2;
+ALTER TABLE OutletInventory DROP FOREIGN KEY OutletInventory_ibfk_2;
+ALTER TABLE DeliveryDetails DROP FOREIGN KEY deliverydetails_ibfk_2;
+ALTER TABLE DeliveryDetails DROP FOREIGN KEY deliverydetails_ibfk_1;
+ALTER TABLE TransactionDetails DROP FOREIGN KEY transactiondetails_ibfk_2;
+
+ALTER TABLE WarehouseInventory 
+ADD CONSTRAINT fk_warehouseinventory_product 
+FOREIGN KEY (ProductID) REFERENCES Product(ProductID) ON DELETE RESTRICT;
+
+ALTER TABLE OutletInventory 
+ADD CONSTRAINT fk_outletinventory_product 
+FOREIGN KEY (ProductID) REFERENCES Product(ProductID) ON DELETE RESTRICT;
+
+ALTER TABLE DeliveryDetails 
+ADD CONSTRAINT fk_deliverydetails_product 
+FOREIGN KEY (ProductID) REFERENCES Product(ProductID) ON DELETE RESTRICT;
+
+ALTER TABLE DeliveryDetails 
+ADD CONSTRAINT fk_deliverydetails_stockdelivery 
+FOREIGN KEY (DeliveryID) REFERENCES StockDelivery(DeliveryID) ON DELETE CASCADE;
+
+ALTER TABLE TransactionDetails 
+ADD CONSTRAINT fk_transactiondetails_product 
+FOREIGN KEY (ProductID) REFERENCES Product(ProductID) ON DELETE RESTRICT;
