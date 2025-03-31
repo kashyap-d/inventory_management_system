@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/transactions")
+@RequestMapping("/transactions")
 public class TransactionController {
     private final TransactionService transactionService;
 
@@ -25,17 +25,35 @@ public class TransactionController {
     @GetMapping("/{id}")
     public ResponseEntity<Transaction> getTransactionById(@PathVariable Integer id) {
         Optional<Transaction> transaction = transactionService.getTransactionById(id);
-        return transaction.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+        return transaction.map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @PostMapping
-    public Transaction addTransaction(@RequestBody Transaction transaction) {
+    public Transaction createTransaction(@RequestBody Transaction transaction) {
         return transactionService.saveTransaction(transaction);
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Transaction> updateTransaction(@PathVariable Integer id, @RequestBody Transaction updatedTransaction) {
+        Optional<Transaction> existingTransaction = transactionService.getTransactionById(id);
+        if (existingTransaction.isPresent()) {
+            Transaction transaction = existingTransaction.get();
+            transaction.setOutlet(updatedTransaction.getOutlet());
+            transaction.setCustomer(updatedTransaction.getCustomer());
+            transaction.setTransactionDate(updatedTransaction.getTransactionDate());
+            transaction.setTotalAmount(updatedTransaction.getTotalAmount());
+            return ResponseEntity.ok(transactionService.saveTransaction(transaction));
+        }
+        return ResponseEntity.notFound().build();
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteTransaction(@PathVariable Integer id) {
-        transactionService.deleteTransaction(id);
-        return ResponseEntity.noContent().build();
+        if (transactionService.getTransactionById(id).isPresent()) {
+            transactionService.deleteTransaction(id);
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.notFound().build();
     }
 }

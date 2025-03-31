@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/api/transaction-details")
+@RequestMapping("/transaction-details")
 public class TransactionDetailsController {
     private final TransactionDetailsService transactionDetailsService;
 
@@ -25,17 +25,34 @@ public class TransactionDetailsController {
     @GetMapping("/{transactionId}/{productId}")
     public ResponseEntity<TransactionDetails> getTransactionDetailsById(@PathVariable Integer transactionId, @PathVariable Integer productId) {
         Optional<TransactionDetails> details = transactionDetailsService.getTransactionDetailsById(transactionId, productId);
-        return details.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
+        return details.map(ResponseEntity::ok)
+                      .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @PostMapping
-    public TransactionDetails addTransactionDetails(@RequestBody TransactionDetails transactionDetails) {
+    public TransactionDetails createTransactionDetails(@RequestBody TransactionDetails transactionDetails) {
         return transactionDetailsService.saveTransactionDetails(transactionDetails);
+    }
+
+    @PutMapping("/{transactionId}/{productId}")
+    public ResponseEntity<TransactionDetails> updateTransactionDetails(@PathVariable Integer transactionId, @PathVariable Integer productId, 
+                                                                       @RequestBody TransactionDetails updatedDetails) {
+        Optional<TransactionDetails> existingDetails = transactionDetailsService.getTransactionDetailsById(transactionId, productId);
+        if (existingDetails.isPresent()) {
+            TransactionDetails details = existingDetails.get();
+            details.setQuantity(updatedDetails.getQuantity());
+            details.setUnitPrice(updatedDetails.getUnitPrice());
+            return ResponseEntity.ok(transactionDetailsService.saveTransactionDetails(details));
+        }
+        return ResponseEntity.notFound().build();
     }
 
     @DeleteMapping("/{transactionId}/{productId}")
     public ResponseEntity<Void> deleteTransactionDetails(@PathVariable Integer transactionId, @PathVariable Integer productId) {
-        transactionDetailsService.deleteTransactionDetails(transactionId, productId);
-        return ResponseEntity.noContent().build();
+        if (transactionDetailsService.getTransactionDetailsById(transactionId, productId).isPresent()) {
+            transactionDetailsService.deleteTransactionDetails(transactionId, productId);
+            return ResponseEntity.noContent().build();
+        }
+        return ResponseEntity.notFound().build();
     }
 }

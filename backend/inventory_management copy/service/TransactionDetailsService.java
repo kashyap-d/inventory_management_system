@@ -18,8 +18,8 @@ public class TransactionDetailsService {
         return transactionDetailsRepository.findAll();
     }
 
-    public List<TransactionDetails> getTransactionDetailsByTransactionId(Integer transactionId) {
-        return transactionDetailsRepository.findByTransaction_TransactionID(transactionId);
+    public Optional<TransactionDetails> getTransactionDetailsById(Integer transactionId, Integer productId) {
+        return transactionDetailsRepository.findByTransaction_TransactionIDAndProduct_ProductID(transactionId, productId);
     }
 
     public TransactionDetails saveTransactionDetails(TransactionDetails transactionDetails) {
