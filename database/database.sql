@@ -83,15 +83,20 @@ CREATE TABLE TransactionDetails (
 
 DELIMITER $$
 
--- Trigger to update OutletInventory after a transaction
 CREATE TRIGGER trg_after_transaction_details_insert
 AFTER INSERT ON TransactionDetails
 FOR EACH ROW
 BEGIN
     DECLARE v_OutletID INT;
+    DECLARE v_ExistingQty INT;
     SELECT OutletID INTO v_OutletID FROM Transaction WHERE TransactionID = NEW.TransactionID;
     
-    IF (SELECT Quantity FROM OutletInventory WHERE OutletID = v_OutletID AND ProductID = NEW.ProductID) >= NEW.Quantity THEN
+    -- Check if the product exists in the outlet
+    SELECT Quantity INTO v_ExistingQty 
+    FROM OutletInventory 
+    WHERE OutletID = v_OutletID AND ProductID = NEW.ProductID;
+    
+    IF v_ExistingQty IS NOT NULL AND v_ExistingQty >= NEW.Quantity THEN
         UPDATE OutletInventory
         SET Quantity = Quantity - NEW.Quantity
         WHERE OutletID = v_OutletID AND ProductID = NEW.ProductID;
@@ -100,21 +105,38 @@ BEGIN
     END IF;
 END$$
 
--- Trigger to update inventories after a delivery
+DELIMITER ;
+
+
+DELIMITER $$
+
 CREATE TRIGGER trg_after_delivery_details_insert
 AFTER INSERT ON DeliveryDetails
 FOR EACH ROW
 BEGIN
     DECLARE v_OutletID INT;
     DECLARE v_WarehouseID INT;
+    DECLARE v_ExistingQty INT;
     
     SELECT OutletID, WarehouseID INTO v_OutletID, v_WarehouseID FROM StockDelivery WHERE DeliveryID = NEW.DeliveryID;
     
+    -- Check for sufficient stock in warehouse
     IF (SELECT Quantity FROM WarehouseInventory WHERE WarehouseID = v_WarehouseID AND ProductID = NEW.ProductID) >= NEW.Quantity THEN
-        UPDATE OutletInventory
-        SET Quantity = Quantity + NEW.Quantity
+        -- Update OutletInventory or create if doesn't exist
+        SELECT Quantity INTO v_ExistingQty 
+        FROM OutletInventory 
         WHERE OutletID = v_OutletID AND ProductID = NEW.ProductID;
         
+        IF v_ExistingQty IS NOT NULL THEN
+            UPDATE OutletInventory
+            SET Quantity = Quantity + NEW.Quantity
+            WHERE OutletID = v_OutletID AND ProductID = NEW.ProductID;
+        ELSE
+            INSERT INTO OutletInventory (OutletID, ProductID, Quantity)
+            VALUES (v_OutletID, NEW.ProductID, NEW.Quantity);
+        END IF;
+        
+        -- Update WarehouseInventory
         UPDATE WarehouseInventory
         SET Quantity = Quantity - NEW.Quantity
         WHERE WarehouseID = v_WarehouseID AND ProductID = NEW.ProductID;
@@ -124,3 +146,4 @@ BEGIN
 END$$
 
 DELIMITER ;
+
